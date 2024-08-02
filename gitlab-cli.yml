@@ -1,0 +1,81 @@
+stages:
+  - install
+  - lint
+  - test
+  - build
+  - dockerize
+  - deploy
+
+variables:
+  APP_ENV: 'testing'
+  AWS_DEFAULT_REGION: 'us-west-2'
+  ECR_REGISTRY: 'XXXX11255XXXXX.dkr.ecr.ap-2.amazonaws.com'
+  ECR_REPOSITORY: 'course_creation_srvc'
+  IMAGE_TAG: $CI_COMMIT_SHA
+
+cache:
+  paths:
+    - vendor/
+
+install_dependencies:
+  stage: install
+  image: composer:latest
+  script:
+    - composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts --optimize-autoloader
+  artifacts:
+    paths:
+      - vendor/
+
+lint_code:
+  stage: lint
+  image: composer:latest
+  before_script:
+    - composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts --optimize-autoloader
+  script:
+    - ./vendor/bin/phpcs --standard=PSR12 app/ routes/
+
+run_tests:
+  stage: test
+  image: php:7.4
+  services:
+    - mysql:latest
+  variables:
+    MYSQL_DATABASE: laravel_test
+    MYSQL_ROOT_PASSWORD: root
+  before_script:
+    - apt-get update && apt-get install -y unzip libzip-dev
+    - docker-php-ext-install zip pdo pdo_mysql
+    - cp .env.example .env
+    - php artisan key:generate
+    - php artisan migrate --seed --force
+  script:
+    - vendor/bin/phpunit --coverage-text --colors=never
+
+build_project:
+  stage: build
+  image: php:7.4
+  script:
+    - apt-get update && apt-get install -y zip libzip-dev
+    - docker-php-ext-install zip
+    - zip -r laravel_project.zip . -x "*.git*"
+  artifacts:
+    paths:
+      - laravel_project.zip
+
+dockerize:
+  stage: dockerize
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+    - docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+deploy:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - aws eks update-kubeconfig --name <your-cluster-name> --region $AWS_DEFAULT_REGION
+    - kubectl set image deployment/<your-deployment-name> <your-container-name>=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

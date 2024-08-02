@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: laravel-migrate
+spec:
+  template:
+    spec:
+      containers:
+      - name: laravel
+        image: radiantcjuan/k230925_kent_elearning_course_creation_service:latest  # Replace with your Docker image
+        command: ["php", "artisan", "migrate", "--seed"]
+        env:
+        - name: DB_HOST
+          value: mariadb
+        - name: DB_DATABASE
+          value: bitnami_myapp
+        - name: DB_USERNAME
+          value: bn_myapp
+        - name: DB_PASSWORD
+          value: ""  # Empty password as per the environment variable
+      restartPolicy: OnFailure

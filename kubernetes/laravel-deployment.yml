@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k230925
+  labels:
+    app: laravel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: laravel
+  template:
+    metadata:
+      labels:
+        app: laravel
+    spec:
+      containers:
+      - name: laravel
+        image: radiantcjuan/k230925_kent_elearning_course_creation_service:latest  # Replace with your Docker image
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_HOST
+          value: mariadb  # This should match the MariaDB service name
+        - name: DB_DATABASE
+          value: bitnami_myapp
+        - name: DB_USERNAME
+          value: bn_myapp
+        - name: DB_PASSWORD
+          value: ""  # Empty password as per the environment variable
+      #   volumeMounts:
+      #   - name: web-root
+      #     mountPath: /var/www/html
+      #   securityContext:
+      #     runAsUser: 0
+      # volumes:
+      # - name: web-root
+      #   persistentVolumeClaim:
+      #     claimName: laravel-pvc
+
+---
+# migrate database
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: laravel-migrate
+spec:
+  template:
+    spec:
+      containers:
+      - name: laravel
+        image: radiantcjuan/k230925_kent_elearning_course_creation_service:latest  # Replace with your Docker image
+        command: ["php", "artisan", "migrate", "--seed"]
+        env:
+        - name: DB_HOST
+          value: mariadb
+        - name: DB_DATABASE
+          value: bitnami_myapp
+        - name: DB_USERNAME
+          value: bn_myapp
+        - name: DB_PASSWORD
+          value: ""  # Empty password as per the environment variable
+      restartPolicy: OnFailure
