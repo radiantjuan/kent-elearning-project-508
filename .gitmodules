@@ -1,0 +1,3 @@
+[submodule "kent-elearning-app"]
+	path = kent-elearning-app
+	url = git@github.com:radiantjuan/kent-elearning-app.git
