@@ -1,13 +1,20 @@
 # Specify the provider and region
 provider "aws" {
   region     = "ap-southeast-2" # Sydney region
-  access_key = var.aws_access_key
-  secret_key = var.aws_secret_key
 }
 
 # Define variables for AWS credentials
-variable "aws_access_key" {}
-variable "aws_secret_key" {}
+variable "aws_access_key" {
+  description = "AWS Access Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_key" {
+  description = "AWS Secret Key"
+  type        = string
+  sensitive   = true
+}
 
 # Define a security group for the EC2 instance
 resource "aws_security_group" "allow_ssh" {
