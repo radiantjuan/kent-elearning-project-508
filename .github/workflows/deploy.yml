@@ -37,7 +37,7 @@ jobs:
       - name: Commit and Push Changes
         working-directory: .
         run: |
-          git config --global user.name "github-actions"
+          git config --global user.name "Radiant Juan"
           git config --global user.email "radiantcjuan@gmail.com"
           git add .
           git commit -m "Auto-commit Terraform changes after apply"
