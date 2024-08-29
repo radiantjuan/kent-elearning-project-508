@@ -1,12 +1,7 @@
 name: Destroy Terraform
 
 on:
-  push:
-    branches:
-      - destroy
-
-    # Allows you to run this workflow manually from the Actions tab
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   terraform:
