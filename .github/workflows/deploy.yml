@@ -43,11 +43,12 @@ jobs:
           git commit -m "Auto-commit Terraform changes after apply"
           git push https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
 
-      - name: Capture Terraform Outputs
-        id: capture-outputs
+      - name: Get RDS Endpoint
+        id: get_rds_endpoint
         run: |
-          echo "RDS_ENDPOINT=$(terraform output -raw rds_endpoint)" >> $GITHUB_ENV
+          RDS_ENDPOINT=$(terraform output -raw rds_endpoint | tr -d '\n')
+          echo "RDS_ENDPOINT=$RDS_ENDPOINT" >> $GITHUB_ENV
 
-      - name: Use Terraform Outputs
-        run: |
+      - name: Debug RDS Endpoint
+        run: | 
           echo "RDS Endpoint: $RDS_ENDPOINT"
