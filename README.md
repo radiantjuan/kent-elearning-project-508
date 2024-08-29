@@ -17,4 +17,4 @@ This project is licensed under the [MIT License](https://opensource.org/licenses
 ## Contact
 
 For any questions or feedback, please contact:  
-**Email:** [K230925@Student.kent.edu.au](mailto:K230925@Student.kent.edu.au) test change
+**Email:** [K230925@Student.kent.edu.au](mailto:K230925@Student.kent.edu.au) test changes
