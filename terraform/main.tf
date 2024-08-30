@@ -16,6 +16,12 @@ variable "aws_secret_key" {
   sensitive   = true
 }
 
+variable "ssh_public_key" {
+  description = "SSH Public Key"
+  type        = string
+  sensitive   = true
+}
+
 # Security group for the EC2 instance
 resource "aws_security_group" "ec2_sg" {
   name        = "ec2-sg"
@@ -68,7 +74,7 @@ resource "aws_security_group" "rds_sg" {
 
 resource "aws_key_pair" "admin_key_pair" {
   key_name   = "admin-key-pair"
-  public_key = file("~/.ssh/id_rsa.pub")
+  public_key = var.ssh_public_key
 }
 
 # Create an EC2 instance within the free tier
