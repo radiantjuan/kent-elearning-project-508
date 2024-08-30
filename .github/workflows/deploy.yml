@@ -46,8 +46,7 @@ jobs:
       - name: Get RDS Endpoint
         id: get_rds_endpoint
         run: |
-          RDS_ENDPOINT=$(terraform output -raw rds_endpoint | sed 's/"//g' | sed 's/:3306//g')
-          echo "RDS_ENDPOINT=$RDS_ENDPOINT" >> $GITHUB_ENV
+          echo "RDS_ENDPOINT=$(terraform output -raw rds_endpoint | sed 's/"//g' | sed 's/:3306//g')" >> $GITHUB_ENV
 
       - name: Debug RDS Endpoint
         run: | 
