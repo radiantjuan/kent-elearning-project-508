@@ -42,6 +42,13 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"]  # Adjust as needed
   }
 
+    ingress {
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]  # Allow HTTP traffic from any IP
+    }
+
   tags = {
     Name = "ec2-sg"
   }
