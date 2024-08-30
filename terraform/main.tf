@@ -66,10 +66,10 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-# resource "aws_key_pair" "admin_key_pair" {
-#   key_name   = "admin-key-pair"
-#   public_key = file("~/.ssh/id_rsa.pub")
-# }
+resource "aws_key_pair" "admin_key_pair" {
+  key_name   = "admin-key-pair"
+  public_key = file("~/.ssh/id_rsa.pub")
+}
 
 # Create an EC2 instance within the free tier
 resource "aws_instance" "web" {
@@ -77,7 +77,7 @@ resource "aws_instance" "web" {
   instance_type = "t2.micro"
   availability_zone = "ap-southeast-2a"  # Specify the desired Availability Zone
   security_groups = [aws_security_group.ec2_sg.name]
-#   key_name = aws_key_pair.admin_key_pair.key_name  # Specify the key pair
+  key_name = aws_key_pair.admin_key_pair.key_name  # Specify the key pair
   user_data = <<-EOF
                 #!/bin/bash
                 # Update the package index

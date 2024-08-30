@@ -16,6 +16,13 @@ jobs:
         with:
           terraform_version: 1.5.0
 
+      - name: Generate SSH Key Pair
+        id: generate_ssh_key
+        run: |
+          ssh-keygen -t rsa -b 4096 -f id_rsa -N ""
+          echo "SSH_PRIVATE_KEY=$(cat id_rsa)" >> $GITHUB_ENV
+          echo "SSH_PUBLIC_KEY=$(cat id_rsa.pub)" >> $GITHUB_ENV
+
       - name: Terraform Init
         run: terraform init
         working-directory: ./terraform/
