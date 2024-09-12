@@ -3,18 +3,8 @@ provider "aws" {
   region     = "ap-southeast-2" # Sydney region
 }
 
-# Define variables for AWS credentials
-variable "aws_access_key" {
-  description = "AWS Access Key"
-  type        = string
-  sensitive   = true
-}
-
-variable "aws_secret_key" {
-  description = "AWS Secret Key"
-  type        = string
-  sensitive   = true
-}
+# Retrieve AWS account information
+data "aws_caller_identity" "current" {}
 
 variable "ssh_public_key" {
   description = "SSH Public Key"
@@ -127,6 +117,102 @@ resource "aws_db_instance" "default" {
   vpc_security_group_ids = [aws_security_group.rds_sg.id]  # Attach the RDS security group
 }
 
+# Enable AWS Config for resource tracking
+resource "aws_config_configuration_recorder" "main" {
+  role_arn = aws_iam_role.config_role.arn
+
+  recording_group {
+    all_supported = true
+    include_global_resource_types = true
+  }
+}
+
+resource "aws_iam_role" "config_role" {
+  name = "config-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action    = "sts:AssumeRole",
+      Effect    = "Allow",
+      Principal = {
+        Service = "config.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_s3_bucket_policy" "config_bucket_policy" {
+  bucket = aws_s3_bucket.config_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "config.amazonaws.com"
+        },
+        Action = "s3:PutObject",
+        Resource = "${aws_s3_bucket.config_bucket.arn}/*",
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl" = "bucket-owner-full-control"
+          }
+        }
+      },
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        },
+        Action = "s3:PutObject",
+        Resource = "${aws_s3_bucket.config_bucket.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*",
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl" = "bucket-owner-full-control"
+          }
+        }
+      },
+      {
+        Effect = "Allow",
+        Principal = "*",
+        Action = "s3:GetBucketAcl",
+        Resource = "${aws_s3_bucket.config_bucket.arn}"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "config_role_policy" {
+  role       = aws_iam_role.config_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWS_ConfigRole"
+}
+
+resource "aws_config_delivery_channel" "main" {
+  s3_bucket_name = aws_s3_bucket.config_bucket.bucket
+}
+
+# S3 bucket for AWS Config logs
+resource "aws_s3_bucket" "config_bucket" {
+  bucket = "my-config-logs-bucket"
+}
+
+# Enable CloudTrail for auditing and logging
+resource "aws_cloudtrail" "main" {
+  name                          = "cloudtrail"
+  s3_bucket_name                = aws_s3_bucket.config_bucket.bucket
+  include_global_service_events = true
+  is_multi_region_trail         = true
+  enable_logging                = true
+}
+
+# Enable CloudWatch for monitoring and logging
+resource "aws_cloudwatch_log_group" "log_group" {
+  name              = "/aws/monitoring/cloudwatch"
+  retention_in_days = 30
+}
+
 # Outputs
 output "instance_id" {
   value = aws_instance.web.id
@@ -134,4 +220,12 @@ output "instance_id" {
 
 output "rds_endpoint" {
   value = aws_db_instance.default.endpoint
+}
+
+output "config_recorder_status" {
+  value = aws_config_configuration_recorder.main.name
+}
+
+output "cloudtrail_status" {
+  value = aws_cloudtrail.main.name
 }
